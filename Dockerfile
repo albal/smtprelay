@@ -16,6 +16,9 @@ COPY . .
 # Build the Go app
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o smtprelay
 
+# Create a non-root user and group
+RUN groupadd -r smtpgroup && useradd -r -g smtpgroup smtpuser
+
 # Step 2: Create a small image
 FROM scratch
 
@@ -27,10 +30,10 @@ COPY --from=builder /etc/group /etc/group
 COPY --from=builder /app/smtprelay /usr/bin/smtprelay
 
 # Use an unprivileged user.
-USER nobody:nobody
+USER smtpuser:smtpgroup
 
 # Expose port 2525 (default smtprelay port)
-EXPOSE 25
+EXPOSE 2525
 
 # Command to run
 ENTRYPOINT ["smtprelay"]
